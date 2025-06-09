@@ -18,7 +18,7 @@ module Raft
     CLUSTER_NODES = ENV.fetch('CLUSTER_NODES', 'localhost:8001,localhost:8002,localhost:8003').split(',').map(&:strip)
 
     # Storage Configuration
-    DATA_DIR = ENV.fetch('DATA_DIR', './logs')
+    DATA_DIR = ENV.fetch('DATA_DIR', 'logs')
     STATE_MACHINE_FILE = ENV.fetch('STATE_MACHINE_FILE', 'state_machine.json')
     PERSISTENCE_ENABLED = ENV.fetch('PERSISTENCE_ENABLED', 'true').downcase == 'true'
 

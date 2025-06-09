@@ -1,0 +1,19 @@
+AllCops:
+  TargetRubyVersion: 2.6
+  NewCops: enable
+  Include:
+    - '**/*.rb'
+    - 'Gemfile'
+    - 'Rakefile'
+  Exclude:
+    - 'logs/**/*'
+    - '.git/**/*'
+
+Style/Documentation:
+  Enabled: false
+
+Style/FrozenStringLiteralComment:
+  Enabled: false
+
+Layout/LineLength:
+  Max: 120 

@@ -12,11 +12,6 @@ module Raft
     ELECTION_TIMEOUT_MAX = ENV.fetch('RAFT_ELECTION_TIMEOUT_MAX', '10.0').to_f
     REQUEST_TIMEOUT = ENV.fetch('RAFT_REQUEST_TIMEOUT', '2.0').to_f
 
-    # Node Configuration
-    NODE_ID = ENV.fetch('NODE_ID', 'node1')
-    NODE_PORT = ENV.fetch('NODE_PORT', '8001').to_i
-    CLUSTER_NODES = ENV.fetch('CLUSTER_NODES', 'localhost:8001,localhost:8002,localhost:8003').split(',').map(&:strip)
-
     # Storage Configuration
     DATA_DIR = ENV.fetch('DATA_DIR', 'logs')
     STATE_MACHINE_FILE = ENV.fetch('STATE_MACHINE_FILE', 'state_machine.json')

@@ -1,7 +1,7 @@
 require 'json'
 require 'timeout'
 require_relative 'node_state'
-require_relative 'log_entry'
+require_relative '../models'
 require_relative '../config'
 require_relative '../persistence/state_machine'
 require_relative '../rpc/drb_server'

@@ -1,10 +1,8 @@
-require_relative '../core/log_entry'
-
 module Raft
   module LogManagement
     # Add a new log entry (for leaders)
     def add_log_entry(command)
-      entry = LogEntry.new(current_term, last_log_index + 1, command)
+      entry = Models::LogEntry.new(term: current_term, index: last_log_index + 1, command: command)
       log << entry
       logger.info "Added log entry: #{entry}"
       entry

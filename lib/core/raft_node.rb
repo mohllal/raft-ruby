@@ -7,15 +7,23 @@ require_relative '../persistence/state_machine'
 require_relative '../rpc/drb_server'
 require_relative '../rpc/remote_node'
 require_relative '../mixins/core_utilities'
+require_relative '../mixins/state_transitions'
 require_relative '../mixins/cluster_setup'
 require_relative '../mixins/log_management'
+require_relative '../mixins/election_management'
+require_relative '../mixins/heartbeat_management'
+require_relative '../mixins/rpc_handlers'
 
 # Main Raft Node implementation
 module Raft
   class RaftNode
     include CoreUtilities
+    include StateTransitions
     include ClusterSetup
     include LogManagement
+    include ElectionManagement
+    include HeartbeatManagement
+    include RpcHandlers
 
     attr_reader :id, :state, :current_term, :voted_for
 

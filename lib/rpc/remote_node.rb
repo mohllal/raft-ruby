@@ -64,39 +64,33 @@ module Raft
     end
 
     # Request vote from a remote node
-    def request_vote(candidate_id, term, last_log_index, last_log_term)
-      logger.info "→ Requesting vote from #{node_id} (term #{term})"
+    def request_vote(request)
+      logger.info "→ Requesting vote from #{node_id} (term #{request.term})"
 
-      result = call_remote(:request_vote, candidate_id, term, last_log_index, last_log_term)
+      response = call_remote(:request_vote, request)
 
-      vote_response_status = result[:vote_granted] ? 'GRANTED' : 'DENIED'
-      logger.info "← Vote response from #{node_id}: #{vote_response_status} (term #{result[:term]})"
-
-      result
+      logger.info "← Vote response from #{node_id}: #{response}"
+      response
     end
 
     # Send append entries to a remote node
-    def append_entries(leader_id, term, prev_log_index, prev_log_term, entries, leader_commit)
-      logger.info "→ Sending append_entries to #{node_id} (term #{term}, #{entries.length} entries)"
+    def append_entries(request)
+      logger.info "→ Sending append_entries to #{node_id} (term #{request.term}, #{request.log_entries.length} entries)"
 
-      result = call_remote(:append_entries, leader_id, term, prev_log_index, prev_log_term, entries, leader_commit)
+      response = call_remote(:append_entries, request)
 
-      append_entries_response_status = result[:success] ? 'SUCCESS' : 'FAILED'
-      logger.info "← AppendEntries response from #{node_id}: #{append_entries_response_status} (term #{result[:term]})"
-
-      result
+      logger.info "← AppendEntries response from #{node_id}: #{response}"
+      response
     end
 
     # Check if a remote node is reachable
     def ping
       logger.info "→ Sending ping to #{node_id}"
 
-      result = call_remote(:ping)
+      response = call_remote(:ping)
 
-      ping_response_status = result[:success] ? 'SUCCESS' : 'FAILED'
-      logger.info "← Ping response from #{node_id}: #{ping_response_status} (term #{result[:term]})"
-
-      result
+      logger.info "← Ping response from #{node_id}: #{response}"
+      response
     end
 
     private

@@ -19,9 +19,8 @@ module Raft
 
     attr_reader :id, :state, :current_term, :voted_for
 
-    def initialize(id, cluster_nodes = [], port = nil)
+    def initialize(id, port = nil)
       @id = id
-      @cluster_nodes = cluster_nodes
       @port = port
 
       # Persistent state on all servers
@@ -63,7 +62,7 @@ module Raft
     private
 
     attr_accessor :drb_server, :election_timer, :heartbeat_timer, :log, :commit_index, :last_applied
-    attr_reader :logger, :mutex, :state_machine, :remote_nodes, :port, :next_index, :match_index, :cluster_nodes
+    attr_reader :logger, :mutex, :state_machine, :remote_nodes, :port, :next_index, :match_index
     attr_writer :state, :current_term, :voted_for
   end
 end

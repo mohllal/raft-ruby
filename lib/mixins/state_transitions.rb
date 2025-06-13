@@ -27,8 +27,8 @@ module Raft
       self.current_term += 1
       self.voted_for = id
 
-      # Stop election timer
-      stop_election_timer
+      # Reset election timer to retry if this election fails (no majority votes)
+      reset_election_timer
 
       logger.info "Became candidate (term #{current_term})"
     end
@@ -37,10 +37,8 @@ module Raft
     def become_leader
       self.state = NodeState::LEADER
 
-      # Reset cluster nodes state to leader state
-      cluster_nodes.each do |node_id|
-        next if node_id == id
-
+      # Initialize next_index and match_index for all remote nodes
+      remote_nodes.each_key do |node_id|
         next_index[node_id] = last_log_index + 1
         match_index[node_id] = 0
       end

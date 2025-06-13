@@ -54,12 +54,12 @@ module Raft
 
     # Get majority count for cluster
     def majority_count
-      (cluster_nodes.length / 2) + 1
+      (cluster_size / 2) + 1
     end
 
-    # Get current cluster size
+    # Get current cluster size (including self)
     def cluster_size
-      cluster_nodes.length
+      remote_nodes.size + 1
     end
 
     # Check if we have a majority of nodes

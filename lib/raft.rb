@@ -1,4 +1,7 @@
 # Main entry point for the Raft implementation
+#
+# This file requires all the necessary files for the Raft implementation.
+
 require_relative 'core/raft_node'
 require_relative 'rpc/remote_node'
 

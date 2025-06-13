@@ -1,3 +1,7 @@
+# Cluster setup mixin
+#
+# This module provides methods for setting up the cluster ports and starting/stopping the DRb server.
+
 module Raft
   module ClusterSetup
     # Set up cluster ports mapping

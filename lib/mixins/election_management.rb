@@ -1,4 +1,6 @@
-require_relative '../config'
+# Election management mixin
+#
+# This module provides methods for managing the election process of a Raft node.
 
 module Raft
   module ElectionManagement

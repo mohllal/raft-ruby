@@ -1,18 +1,10 @@
 require 'json'
 require 'timeout'
-require_relative 'node_state'
 require_relative '../models'
 require_relative '../config'
-require_relative '../persistence/state_machine'
-require_relative '../rpc/drb_server'
-require_relative '../rpc/remote_node'
-require_relative '../mixins/core_utilities'
-require_relative '../mixins/state_transitions'
-require_relative '../mixins/cluster_setup'
-require_relative '../mixins/log_management'
-require_relative '../mixins/election_management'
-require_relative '../mixins/heartbeat_management'
-require_relative '../mixins/rpc_handlers'
+require_relative '../persistence'
+require_relative '../rpc'
+require_relative '../mixins'
 
 # Main Raft Node implementation
 module Raft

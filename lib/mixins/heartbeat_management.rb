@@ -1,4 +1,6 @@
-require_relative '../config'
+# Heartbeat management mixin
+#
+# This module provides methods for managing the heartbeat of a leader node.
 
 module Raft
   module HeartbeatManagement

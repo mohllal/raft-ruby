@@ -1,4 +1,6 @@
-require_relative '../core/node_state'
+# State transitions mixin
+#
+# This module provides methods for transitioning between different states of a Raft node.
 
 module Raft
   module StateTransitions

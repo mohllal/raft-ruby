@@ -1,3 +1,7 @@
+# Log management mixin
+#
+# This module provides methods for managing the log of a Raft node.
+
 module Raft
   module LogManagement
     # Add a new log entry (for leaders)

@@ -1,3 +1,7 @@
+# Core utilities mixin
+#
+# This module provides core utilities for a Raft node.
+
 module Raft
   module CoreUtilities
     # =================== LOG UTILITIES ===================

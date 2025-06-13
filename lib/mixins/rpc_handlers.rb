@@ -1,3 +1,7 @@
+# RPC handlers mixin
+#
+# This module provides methods for handling RPC requests from other Raft nodes.
+
 module Raft
   module RpcHandlers
     # RequestVote RPC Handler

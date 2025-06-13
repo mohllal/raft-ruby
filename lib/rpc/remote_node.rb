@@ -46,11 +46,11 @@ module Raft
           logger.debug "Successfully called #{method_name} on #{node_id}"
           return result
         rescue Timeout::Error
-          logger.warn "Timeout calling #{method_name} on #{node_id} (attempt #{attempt}/#{retries})"
+          logger.debug "Timeout calling #{method_name} on #{node_id} (attempt #{attempt}/#{retries})"
           attempt += 1
           sleep(0.1) if attempt <= retries
         rescue DRb::DRbConnError, Errno::ECONNREFUSED => e
-          logger.warn "Connection error #{method_name} on #{node_id}: #{e.message} (attempt #{attempt}/#{retries})"
+          logger.debug "Connection error #{method_name} on #{node_id}: #{e.message} (attempt #{attempt}/#{retries})"
           attempt += 1
           sleep(0.1) if attempt <= retries
         rescue StandardError => e
@@ -59,7 +59,7 @@ module Raft
         end
       end
 
-      logger.error "Failed to call #{method_name} on #{node_id} after #{retries} attempts"
+      logger.debug "Failed to call #{method_name} on #{node_id} after #{retries} attempts"
       raise DRb::DRbConnError, "Failed to connect to #{node_id} after #{retries} attempts"
     end
 

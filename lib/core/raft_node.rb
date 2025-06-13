@@ -19,7 +19,7 @@ module Raft
 
     attr_reader :id, :state, :current_term, :voted_for
 
-    def initialize(id, port = nil)
+    def initialize(id, port)
       @id = id
       @port = port
 
@@ -42,7 +42,7 @@ module Raft
       # State machine
       @state_machine = StateMachine.new(id)
 
-      # Distributed communication
+      # Cluster remote nodes and DRb server
       @remote_nodes = {}
       @drb_server = nil
 
@@ -57,6 +57,9 @@ module Raft
       @logger = Config.logger_for(self.class)
 
       logger.info "Node #{id} initialized as #{state}"
+
+      # Start election timer (all nodes start as followers)
+      start_election_timer
     end
 
     private

@@ -46,7 +46,7 @@ module Raft
       # Stop election timer since we go to leader state
       stop_election_timer
 
-      # Reset heartbeat timer
+      # Reset heartbeat timer and start sending heartbeats
       reset_heartbeat_timer
 
       logger.info "Became leader (term #{current_term})"

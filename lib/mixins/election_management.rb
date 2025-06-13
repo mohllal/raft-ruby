@@ -50,7 +50,7 @@ module Raft
             end
           end
         rescue StandardError => e
-          logger.warn "Failed to get vote from #{node_id}: #{e.message}"
+          logger.debug "Failed to get vote from #{node_id}: #{e.message}"
         end
       end
     end

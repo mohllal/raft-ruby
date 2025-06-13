@@ -32,7 +32,7 @@ module Raft
             end
           end
         rescue StandardError => e
-          logger.warn "Failed to send heartbeat to #{node_id}: #{e.message}"
+          logger.debug "Failed to send heartbeat to #{node_id}: #{e.message}"
         end
       end
     end

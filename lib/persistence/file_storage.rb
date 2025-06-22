@@ -2,12 +2,11 @@ require 'json'
 require 'fileutils'
 require_relative '../config'
 
-# File storage for Raft
+# Simple file storage for Raft demo
 #
-# This class provides a simple file storage for Raft.
-# It allows for reading and writing data to a file.
-#
-# @param file_path [String] The path to the file to store the data
+# Provides basic JSON file storage for persisting data
+# A production implementation would use a more robust storage solution
+# such as a database or a distributed file system.
 
 module Raft
   class FileStorage
@@ -32,6 +31,11 @@ module Raft
 
     def write(data)
       File.write(file_path, JSON.pretty_generate(data))
+
+      logger.debug "Wrote data to #{File.basename(file_path)}"
+    rescue StandardError => e
+      logger.error "Error writing to file #{file_path}: #{e.message}"
+      raise
     end
 
     private

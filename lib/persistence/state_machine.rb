@@ -1,12 +1,14 @@
 require_relative 'file_storage'
 require_relative '../config'
 
-# State machine for Raft
+# Simple key-value state machine for Raft demo
 #
-# This class provides a simple state machine for Raft.
-# It allows for applying commands to the state machine and persisting the state.
+# This implements the application logic, a basic key-value store
+# that processes committed log entries and persists its state.
 #
-# @param node_id [String] The ID of the node
+# Note: This is simplified for demo purposes. A production Raft
+# implementation would include things like: Snapshots for log compaction,
+# concurrent read handling, more sophisticated command processing, etc...
 
 module Raft
   class StateMachine
@@ -14,32 +16,41 @@ module Raft
       @node_id = node_id
       @logger = Config.logger_for(self.class)
 
-      storage_path = File.join(Config::DATA_DIR, @node_id, Config::STATE_MACHINE_FILE)
+      # The actual key-value store
+      @store = {}
+
+      # Storage for persistence
+      storage_path = File.join(Config::DATA_DIR, node_id.to_s, Config::STATE_FILE)
       @storage = FileStorage.new(storage_path)
 
-      @store = Config::PERSISTENCE_ENABLED ? @storage.read : {}
-
-      logger.info "State machine for #{@node_id} initialized with #{@store.size} entries"
+      # Load existing state
+      load_state
+      logger.info "State machine for node #{node_id} initialized with #{@store.size} entries"
     end
 
+    # Apply a command to the state machine
+    # This is called when a log entry is committed
     def apply(command)
-      case command[:type]
+      return { error: 'Invalid command format' } unless command.is_a?(Hash)
+
+      key = command['key'] || command[:key]
+      value = command['value'] || command[:value]
+      type = command['type'] || command[:type]
+
+      case type
       when 'SET'
-        set(command[:key], command[:value])
+        set(key, value)
       when 'GET'
-        get(command[:key])
+        get(key)
       when 'DELETE'
-        delete(command[:key])
+        delete(key)
       else
-        logger.warn "Unknown command type: #{command[:type]}"
-        { error: "Unknown command type: #{command[:type]}" }
+        logger.warn "Unknown command type: #{type}"
+        { error: "Unknown command type: #{type}" }
       end
     end
 
-    def state
-      store.dup
-    end
-
+    # Get the size of the state machine
     def size
       store.size
     end
@@ -48,32 +59,49 @@ module Raft
 
     attr_reader :node_id, :logger, :storage, :store
 
+    # Set a key-value pair
     def set(key, value)
+      return { error: 'Key cannot be nil' } if key.nil?
+
       old_value = store[key]
       store[key] = value
       persist_state
+
       logger.info "SET #{key} = #{value} (was: #{old_value})"
       { success: true, key: key, value: value, old_value: old_value }
     end
 
+    # Get a value by key
     def get(key)
       value = store[key]
+
       logger.info "GET #{key} => #{value}"
       { success: true, key: key, value: value }
     end
 
+    # Delete a key
     def delete(key)
       value = store.delete(key)
       persist_state
+
       logger.info "DELETE #{key} (was: #{value})"
       { success: true, key: key, deleted_value: value }
     end
 
-    def persist_state
-      return unless Config::PERSISTENCE_ENABLED
+    # Load state from disk
+    def load_state
+      data = storage.read
+      @store = data if data.is_a?(Hash)
+      logger.debug "Loaded #{@store.size} entries from disk"
+    rescue StandardError => e
+      logger.error "Failed to load state: #{e.message}"
+      @store = {}
+    end
 
+    # Persist state to disk
+    def persist_state
       storage.write(store)
-      logger.debug 'State persisted'
+      logger.debug "Persisted #{store.size} entries to disk"
     rescue StandardError => e
       logger.error "Failed to persist state: #{e.message}"
     end

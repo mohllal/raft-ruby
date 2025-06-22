@@ -12,8 +12,8 @@ DEFAULT_CLUSTER = {
 node_id = ARGV[0]
 
 unless node_id && DEFAULT_CLUSTER.key?(node_id)
-  puts "Error: Please specify a valid node ID (#{DEFAULT_CLUSTER.keys.join(', ')})"
-  puts 'Usage: ruby demo/start_node.rb <node_id>'
+  puts "Usage: #{$PROGRAM_NAME} <node_id>"
+  puts "Available nodes: #{DEFAULT_CLUSTER.keys.join(', ')}"
   exit 1
 end
 
@@ -22,37 +22,33 @@ port = DEFAULT_CLUSTER[node_id]
 puts '=== Starting Raft Node ==='
 puts "Node ID: #{node_id}"
 puts "Port: #{port}"
-puts '=========================='
+puts "Cluster: #{DEFAULT_CLUSTER.map { |id, p| "#{id}:#{p}" }.join(', ')}"
+puts '========================='
+puts
 
+# Create and configure the node
+node = Raft::RaftNode.new(node_id, port)
+node.configure_cluster(DEFAULT_CLUSTER)
+node.start_rpc_server
+
+puts "Node #{node_id} is running on port #{port}"
+puts "DRb URI: druby://localhost:#{port}"
+puts
+puts 'The node will:'
+puts '1. Start as a follower'
+puts '2. Begin election timeout (150-300ms)'
+puts '3. Participate in leader election'
+puts '4. Send/receive heartbeats'
+puts '5. Replicate log entries'
+puts
+puts 'Press Ctrl+C to stop the node'
+puts
+
+# Keep the node running
 begin
-  # Create and configure Raft node
-  node = Raft::RaftNode.new(node_id, port)
-  node.setup_cluster_ports(DEFAULT_CLUSTER)
-  node.start_drb_server
-
-  puts "Node #{node_id} started successfully!"
-  puts "DRb URI: druby://localhost:#{port}"
-  puts 'Press Ctrl+C to stop...'
-  puts
-
-  # Keep the node running
-  loop do
-    sleep(1)
-
-    # Display status every 10 seconds
-    if (Time.now.to_i % 10).zero?
-      puts "#{Time.now.strftime('%H:%M:%S')} - Node #{node_id}: #{node.state} (term #{node.current_term})"
-    end
-  end
+  DRb.thread.join
 rescue Interrupt
   puts "\nShutting down node #{node_id}..."
-rescue StandardError => e
-  puts "Error starting node: #{e.message}"
-  puts e.backtrace
-  exit 1
-ensure
-  if node
-    node.stop_drb_server
-    puts "Node #{node_id} stopped."
-  end
+  node.stop_rpc_server
+  exit 0
 end

@@ -17,7 +17,7 @@ module Raft
     include HeartbeatManagement
     include RpcHandlers
 
-    attr_reader :id, :state, :current_term, :voted_for
+    attr_reader :id, :state, :current_term, :voted_for, :commit_index
 
     def initialize(id, port)
       @id = id
@@ -64,8 +64,8 @@ module Raft
 
     private
 
-    attr_accessor :drb_server, :election_timer, :heartbeat_timer, :log, :commit_index, :last_applied
+    attr_accessor :drb_server, :election_timer, :heartbeat_timer, :log, :last_applied
     attr_reader :logger, :mutex, :state_machine, :remote_nodes, :port, :next_index, :match_index
-    attr_writer :state, :current_term, :voted_for
+    attr_writer :state, :current_term, :voted_for, :commit_index
   end
 end

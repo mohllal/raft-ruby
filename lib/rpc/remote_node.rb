@@ -1,6 +1,7 @@
 require 'drb'
 require 'timeout'
 require_relative '../config'
+require_relative '../models'
 
 # Remote node wrapper for DRb client connections
 #
@@ -14,22 +15,19 @@ require_relative '../config'
 
 module Raft
   class RemoteNode
-    def initialize(node_id, port, timeout: nil, retries: 3)
+    def initialize(node_id, port)
       @node_id = node_id
       @port = port
-      @timeout = timeout || Config::REQUEST_TIMEOUT
-      @retries = retries
+      @timeout = Config::RPC_TIMEOUT
+      @retries = Config::RPC_RETRIES
       @uri = "druby://localhost:#{port}"
+      @remote_node = DRbObject.new_with_uri(uri)
       @logger = Config.logger_for(self.class)
 
       DRb.start_service unless DRb.primary_server
     end
 
-    attr_reader :node_id, :uri
-
-    def remote_node
-      @remote_node ||= DRbObject.new_with_uri(uri)
-    end
+    attr_reader :node_id, :uri, :remote_node
 
     # Call a remote method
     def call_remote(method_name, *args)
@@ -75,7 +73,8 @@ module Raft
 
     # Send append entries to a remote node
     def append_entries(request)
-      logger.info "→ Sending append_entries to #{node_id} (term #{request.term}, #{request.log_entries.length} entries)"
+      entry_count = request.log_entries&.length || 0
+      logger.info "→ Sending append_entries to #{node_id} (term #{request.term}, #{entry_count} entries)"
 
       response = call_remote(:append_entries, request)
 

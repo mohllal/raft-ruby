@@ -9,6 +9,7 @@ module Raft
     ELECTION_TIMEOUT_MAX = ENV.fetch('RAFT_ELECTION_TIMEOUT_MAX', 10.0).to_f
     HEARTBEAT_INTERVAL = ENV.fetch('RAFT_HEARTBEAT_INTERVAL', 1.0).to_f
     RPC_TIMEOUT = ENV.fetch('RAFT_RPC_TIMEOUT', 2.0).to_f
+    RPC_RETRIES = ENV.fetch('RAFT_RPC_RETRIES', 3).to_i
 
     # Storage directories
     DATA_DIR = ENV.fetch('RAFT_DATA_DIR', 'data')

@@ -1,6 +1,20 @@
 #!/usr/bin/env ruby
 
-require_relative '../lib/raft'
+# Distributed cluster demo
+#
+# This script demonstrates running a 3-node Raft cluster with inter-node communication.
+# Each node runs in a separate process on different ports.
+#
+# Usage:
+# 1. Start this script: ruby demo/distributed_cluster_demo.rb
+# 2. Open 3 terminal windows
+# 3. In terminal 1: ruby demo/start_node.rb node1
+# 4. In terminal 2: ruby demo/start_node.rb node2
+# 5. In terminal 3: ruby demo/start_node.rb node3
+# 6. Watch the leader election and cluster formation!
+
+require 'drb/drb'
+require 'timeout'
 
 # Default cluster configuration
 DEFAULT_CLUSTER = {
@@ -9,91 +23,208 @@ DEFAULT_CLUSTER = {
   'node3' => 8003
 }.freeze
 
-# Create remote node connections
-nodes = DEFAULT_CLUSTER.to_h { |id, port| [id, Raft::RemoteNode.new(id, port)] }
+# Global variables for the demo
+nodes = {}
 
-puts "\n=== Distributed Raft Cluster Demo ==="
-puts "Connecting to: #{DEFAULT_CLUSTER.map { |id, port| "#{id}:#{port}" }.join(', ')}"
-puts "=====================================\n\n"
-
-def check_connectivity(nodes) # rubocop:disable Naming/PredicateMethod
-  puts '=== Checking Connectivity ==='
-  reachable = nodes.count do |id, node|
+# Helper functions
+def connect_to_nodes(nodes, ports)
+  ports.each do |node_id, port|
+    node = DRbObject.new_with_uri("druby://localhost:#{port}")
+    # Test connection
     node.ping
-    puts "#{id}: ✅ Running"
-    true
-  rescue StandardError
-    puts "#{id}: ❌ Not running"
-    false
-  end
-  puts "#{reachable}/#{nodes.size} nodes reachable\n\n"
-
-  if reachable.zero?
-    puts 'No nodes running! Start them with: ruby demo/start_node.rb <node_id>'
-    false
-  else
-    true
+    nodes[node_id] = node
+    puts "✓ Connected to #{node_id} on port #{port}"
+  rescue StandardError => e
+    puts "✗ Failed to connect to #{node_id} on port #{port}: #{e.message}"
   end
 end
 
-def show_status(nodes)
-  puts "\n=== Cluster Status ==="
-  nodes.each do |id, node|
-    state = node.call_remote(:state)
-    term = node.call_remote(:current_term)
-    voted = node.call_remote(:voted_for)
-    puts "#{id}: #{state} (term #{term}) voted_for: #{voted || 'none'}"
-  rescue StandardError
-    puts "#{id}: UNREACHABLE"
-  end
-  puts
-end
-
-def trigger_election(nodes, node_id)
-  puts "\nTriggering election on #{node_id}..."
-  nodes[node_id].call_remote(:start_election)
-  puts '✅ Election triggered'
-rescue StandardError => e
-  puts "❌ Failed: #{e.message}"
-end
-
-def watch_cluster(nodes, seconds = 30)
-  puts "\n=== Watching cluster for #{seconds} seconds ==="
-  (seconds / 5).times do |i|
-    puts "\n--- #{i * 5}s ---"
-    show_status(nodes)
-    sleep(5) unless i == (seconds / 5) - 1
+def show_cluster_state(nodes)
+  puts "\n=== Current Cluster State ==="
+  nodes.each do |node_id, node|
+    state = node.state
+    term = node.current_term
+    last_log_index = node.last_log_index
+    puts "#{node_id}: #{state} (term: #{term}, log index: #{last_log_index})"
+  rescue StandardError => e
+    puts "#{node_id}: ERROR - #{e.message}"
   end
 end
 
-# Check initial connectivity
-exit unless check_connectivity(nodes)
+def wait_for_leader(nodes, timeout = 30)
+  start_time = Time.now
+
+  while Time.now - start_time < timeout
+    nodes.each do |node_id, node|
+      return node_id if node.state == :leader
+    rescue StandardError => e
+      puts "Error getting state for #{node_id}: #{e.message}"
+    end
+    sleep(0.5)
+  end
+
+  nil
+end
+
+def find_leader(nodes)
+  nodes.each do |node_id, node|
+    return node_id if node.state == :leader
+  rescue StandardError => e
+    puts "Error finding leader: #{e.message}"
+  end
+  nil
+end
+
+def add_log_entry(nodes, key, value)
+  leader_id = find_leader(nodes)
+  unless leader_id
+    puts 'No leader found!'
+    return
+  end
+
+  leader = nodes[leader_id]
+  command = { type: 'SET', key: key, value: value }
+
+  begin
+    entry = leader.add_log_entry(command)
+    puts "✓ Added log entry through #{leader_id}: #{entry}"
+  rescue StandardError => e
+    puts "✗ Failed to add log entry: #{e.message}"
+  end
+end
+
+# Set up signal handler for clean exit
+Signal.trap('INT') do
+  puts "\n\nInterrupted! Exiting demo..."
+  exit 0
+end
+
+# Main script
+puts '=== Distributed Raft Cluster Demo ==='
+puts
+puts 'This demo shows a 3-node Raft cluster with real network communication.'
+puts
+puts 'To start the cluster, run these commands in separate terminals:'
+puts '  ruby demo/start_node.rb node1'
+puts '  ruby demo/start_node.rb node2'
+puts '  ruby demo/start_node.rb node3'
+puts
+puts 'Press Enter once all nodes are started (or Ctrl+C to exit)...'
 
 begin
+  gets
+rescue Interrupt
+  puts "\n\nInterrupted! Exiting demo..."
+  exit 0
+end
+
+# Try to connect to all nodes
+connect_to_nodes(nodes, DEFAULT_CLUSTER)
+
+if nodes.empty?
+  puts 'ERROR: No nodes found! Make sure the nodes are running.'
+  exit 1
+end
+
+# Show initial cluster state
+show_cluster_state(nodes)
+
+# Wait for leader election
+puts "\nWaiting for leader election..."
+leader = wait_for_leader(nodes)
+
+if leader
+  puts "\n✓ Leader elected: #{leader}"
+else
+  puts "\n✗ No leader elected after timeout"
+  exit 1
+end
+
+# Demonstrate cluster behavior
+puts "\n=== Demonstrating Cluster Behavior ==="
+
+# Show heartbeats
+puts "\n1. Heartbeats:"
+puts '   The leader is sending heartbeats to maintain leadership.'
+puts '   Watch the node logs to see AppendEntries messages.'
+sleep(2)
+
+# Add a log entry
+puts "\n2. Log Replication:"
+leader_id = find_leader(nodes)
+if leader_id
+  leader_node = nodes[leader_id]
+  command = { type: 'SET', key: 'demo_key', value: 'demo_value' }
+
+  puts "   Adding log entry through leader (#{leader_id})..."
+  begin
+    entry = leader_node.add_log_entry(command)
+    puts "   ✓ Log entry added: #{entry}"
+
+    # Wait for replication
+    sleep(1)
+
+    # Check replication
+    puts "\n   Checking replication status:"
+    nodes.each do |node_id, node|
+      log_length = node.last_log_index
+      commit_index = node.commit_index
+      puts "   #{node_id}: log length = #{log_length}, commit index = #{commit_index}"
+    rescue StandardError => e
+      puts "   #{node_id}: ERROR - #{e.message}"
+    end
+  rescue StandardError => e
+    puts "   ✗ Failed to add log entry: #{e.message}"
+  end
+end
+
+# Simulate failure
+puts "\n3. Fault Tolerance:"
+puts '   You can test fault tolerance by:'
+puts '   - Stopping the leader (Ctrl+C) and watching a new election'
+puts '   - Stopping a follower and seeing the cluster continue'
+puts '   - Restarting a stopped node and watching it catch up'
+
+# Interactive mode
+puts "\n4. Interactive Mode:"
+puts '   Commands:'
+puts '   - status: Show cluster status'
+puts '   - add <key> <value>: Add a log entry'
+puts '   - quit: Exit demo'
+
+# Interactive loop
+begin
   loop do
-    puts "\n=== MENU ==="
-    puts '1. Check connectivity'
-    puts '2. Show status'
-    puts '3. Trigger election on node1'
-    puts '4. Trigger election on node2'
-    puts '5. Trigger election on node3'
-    puts '6. Watch cluster (30s)'
-    puts '7. Exit'
-    print "\nChoice: "
+    print "\n> "
+    input = gets
 
-    choice = gets&.chomp || '7'
+    # Handle nil input (Ctrl+D or EOF)
+    if input.nil?
+      puts "\nExiting demo..."
+      break
+    end
 
-    case choice
-    when '1' then check_connectivity(nodes)
-    when '2' then show_status(nodes)
-    when '3' then trigger_election(nodes, 'node1')
-    when '4' then trigger_election(nodes, 'node2')
-    when '5' then trigger_election(nodes, 'node3')
-    when '6' then watch_cluster(nodes)
-    when '7' then break
-    else puts 'Invalid choice'
+    input = input.chomp.split
+
+    case input[0]
+    when 'status'
+      show_cluster_state(nodes)
+    when 'add'
+      if input.length < 3
+        puts 'Usage: add <key> <value>'
+      else
+        add_log_entry(nodes, input[1], input[2])
+      end
+    when 'quit', 'exit'
+      puts 'Exiting demo...'
+      break
+    when nil
+      puts 'Invalid input, use status, add, or quit'
+    else
+      puts "Unknown command: #{input[0]}"
     end
   end
 rescue Interrupt
-  puts "\nGoodbye!"
+  puts "\n\nInterrupted! Exiting demo..."
+  exit 0
 end

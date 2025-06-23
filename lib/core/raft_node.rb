@@ -33,8 +33,8 @@ module Raft
       @last_applied = 0
 
       # Volatile state on leaders (reinitialized after election)
-      @next_index = {}    # For each server, index of next log entry to send
-      @match_index = {}   # For each server, index of highest log entry known to be replicated
+      @next_index = {} # Leader: next log index to send to each follower
+      @match_index = {} # Leader: highest log index known to be replicated
 
       # Node state
       @state = NodeState::FOLLOWER
@@ -56,10 +56,13 @@ module Raft
       # Logging
       @logger = Config.logger_for(self.class)
 
-      logger.info "Node #{id} initialized as #{state}"
+      # Initialize log storage and load persistent state
+      initialize_log_storage
 
       # Start election timer (all nodes start as followers)
       start_election_timer
+
+      logger.info "Node #{id} initialized as #{state}"
     end
 
     private

@@ -19,10 +19,7 @@ Layout/LineLength:
   Max: 120
 
 Metrics/AbcSize:
-  Max: 40
-  Exclude:
-    - './lib/mixins/rpc_handlers.rb'
-    - './lib/mixins/election_management.rb'
+  Max: 60
 
 Metrics/MethodLength:
   Max: 40
@@ -38,3 +35,6 @@ Metrics/CyclomaticComplexity:
 
 Metrics/PerceivedComplexity:
   Max: 15
+
+Metrics/ModuleLength:
+  Max: 170

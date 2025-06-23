@@ -15,6 +15,7 @@
 
 require 'drb/drb'
 require 'timeout'
+require_relative '../lib/raft'
 
 # Default cluster configuration
 DEFAULT_CLUSTER = {

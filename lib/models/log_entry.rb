@@ -30,7 +30,8 @@ module Raft
         if command.is_a?(Hash)
           type = command['type'] || command[:type]
           key = command['key'] || command[:key]
-          "#{type} #{key}"
+          value = command['value'] || command[:value]
+          "#{type} #{key} #{value}"
         else
           command.to_s
         end

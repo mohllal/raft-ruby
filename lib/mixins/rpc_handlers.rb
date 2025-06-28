@@ -50,7 +50,7 @@ module Raft
 
         # If term >= currentTerm, become follower and reset election timer
         if request.term >= current_term
-          become_follower(request.term)
+          become_follower(request.term) if state != NodeState::FOLLOWER || request.term > current_term
           reset_election_timer
         end
 

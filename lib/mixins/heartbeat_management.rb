@@ -12,23 +12,40 @@ module Raft
 
       remote_nodes.each do |node_id, remote_node|
         Thread.new do
-          prev_log_index = next_index[node_id] - 1
+          next_idx = next_index[node_id] || 1
+          prev_log_index = next_idx - 1
           prev_log_term = prev_log_index.positive? ? log[prev_log_index - 1].term : 0
+
+          # Include log entries if the follower is behind
+          entries_to_send = []
+          entries_to_send = [log[next_idx - 1]] if next_idx <= log.length
 
           append_request = Models::AppendEntries::Request.new(
             leader_id: id,
             term: current_term,
             prev_log_index: prev_log_index,
             prev_log_term: prev_log_term,
-            log_entries: [],
+            log_entries: entries_to_send,
             leader_commit: commit_index
           )
+
+          logger.debug "Sending heartbeat to #{node_id} (next_idx: #{next_idx}, entries: #{entries_to_send.length})"
+
           response = remote_node.append_entries(append_request)
 
           mutex.synchronize do
             if response.term > current_term
               logger.info "Discovered higher term #{response.term} from #{node_id} - stepping down"
               become_follower(response.term)
+            elsif response.successful? && entries_to_send.any?
+              # Update indices if we sent entries
+              match_index[node_id] = prev_log_index + entries_to_send.length
+              next_index[node_id] = match_index[node_id] + 1
+              logger.debug "Updated indices for #{node_id}: next=#{next_index[node_id]}, match=#{match_index[node_id]}"
+            elsif !response.successful? && next_idx > 1
+              # Decrement nextIndex if append failed
+              next_index[node_id] = [1, next_idx - 1].max
+              logger.debug "Heartbeat failed for #{node_id}, decremented nextIndex to #{next_index[node_id]}"
             end
           end
         rescue StandardError => e

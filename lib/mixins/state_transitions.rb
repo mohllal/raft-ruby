@@ -49,10 +49,10 @@ module Raft
     def become_leader
       self.state = NodeState::LEADER
 
-      # Initialize next_index and match_index for all remote nodes
+      # Initialize follower_next_replication_index and follower_confirmed_index for all remote nodes
       remote_nodes.each_key do |node_id|
-        next_index[node_id] = last_log_index + 1
-        match_index[node_id] = 0
+        follower_next_replication_index[node_id] = last_log_index + 1
+        follower_confirmed_index[node_id] = 0
       end
 
       # Stop election timer since we go to leader state

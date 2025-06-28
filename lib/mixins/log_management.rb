@@ -93,7 +93,7 @@ module Raft
 
     # Replicate entries to a specific follower
     def replicate_to_follower(follower_id, follower_node)
-      next_idx = next_index[follower_id] || 1
+      next_idx = follower_next_replication_index[follower_id] || 1
 
       # Get last log index and term
       prev_log_index = next_idx - 1
@@ -137,26 +137,28 @@ module Raft
         end
 
         if response.successful?
-          # Update nextIndex and matchIndex for follower
+          # Update follower_next_replication_index and follower_confirmed_index for follower
           sent_entries = request.log_entries || []
           if sent_entries.any?
-            match_index[follower_id] = request.prev_log_index + sent_entries.length
-            next_index[follower_id] = match_index[follower_id] + 1
-            logger.debug "Updated indices for #{follower_id}: next=#{next_index[follower_id]}, " \
-                         "match=#{match_index[follower_id]}"
+            follower_confirmed_index[follower_id] = request.prev_log_index + sent_entries.length
+            follower_next_replication_index[follower_id] = follower_confirmed_index[follower_id] + 1
+            logger.debug "Updated indices for #{follower_id}: next=#{follower_next_replication_index[follower_id]}, " \
+                         "match=#{follower_confirmed_index[follower_id]}"
           end
 
           # Check if we can advance commit index
           advance_highest_committed_index
 
           # Continue replicating if there are more entries
-          if next_index[follower_id] <= log.length
+          if follower_next_replication_index[follower_id] <= log.length
             Thread.new { replicate_to_follower(follower_id, remote_nodes[follower_id]) }
           end
         else
-          # Decrement nextIndex and retry
-          next_index[follower_id] = [1, (next_index[follower_id] || 1) - 1].max
-          logger.debug "AppendEntries failed for #{follower_id}, decremented nextIndex to #{next_index[follower_id]}"
+          # Decrement follower_next_replication_index and retry
+          follower_next_replication_index[follower_id] =
+            [1, (follower_next_replication_index[follower_id] || 1) - 1].max
+          logger.debug "AppendEntries failed for #{follower_id}, \
+            decremented follower_next_replication_index to #{follower_next_replication_index[follower_id]}"
 
           # Retry with updated index
           Thread.new { replicate_to_follower(follower_id, remote_nodes[follower_id]) }
@@ -169,10 +171,10 @@ module Raft
       return unless state == NodeState::LEADER
 
       # Find the highest index that a majority of nodes have
-      match_indices = match_index.values + [log.length]
-      sorted_indices = match_indices.sort.reverse
+      confirmed_indices = follower_confirmed_index.values + [log.length]
+      sorted_indices = confirmed_indices.sort.reverse
 
-      majority_size = (match_indices.length / 2) + 1
+      majority_size = (confirmed_indices.length / 2) + 1
       new_highest_committed_index = sorted_indices[majority_size - 1]
 
       # Only advance if the entry is from current term

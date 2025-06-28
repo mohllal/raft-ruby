@@ -12,7 +12,7 @@ module Raft
 
       remote_nodes.each do |node_id, remote_node|
         Thread.new do
-          next_idx = next_index[node_id] || 1
+          next_idx = follower_next_replication_index[node_id] || 1
           prev_log_index = next_idx - 1
           prev_log_term = prev_log_index.positive? ? log[prev_log_index - 1].term : 0
 
@@ -39,13 +39,15 @@ module Raft
               become_follower(response.term)
             elsif response.successful? && entries_to_send.any?
               # Update indices if we sent entries
-              match_index[node_id] = prev_log_index + entries_to_send.length
-              next_index[node_id] = match_index[node_id] + 1
-              logger.debug "Updated indices for #{node_id}: next=#{next_index[node_id]}, match=#{match_index[node_id]}"
+              follower_confirmed_index[node_id] = prev_log_index + entries_to_send.length
+              follower_next_replication_index[node_id] = follower_confirmed_index[node_id] + 1
+              logger.debug "Updated indices for #{node_id}: next=#{follower_next_replication_index[node_id]}, \
+                match=#{follower_confirmed_index[node_id]}"
             elsif !response.successful? && next_idx > 1
-              # Decrement nextIndex if append failed
-              next_index[node_id] = [1, next_idx - 1].max
-              logger.debug "Heartbeat failed for #{node_id}, decremented nextIndex to #{next_index[node_id]}"
+              # Decrement follower_next_replication_index if append failed
+              follower_next_replication_index[node_id] = [1, next_idx - 1].max
+              logger.debug "Heartbeat failed for #{node_id}, \
+                decremented follower_next_replication_index to #{follower_next_replication_index[node_id]}"
             end
           end
         rescue StandardError => e

@@ -4,7 +4,7 @@ require_relative '../config'
 
 # Simple file storage for Raft demo
 #
-# Provides basic JSON file storage for persisting data
+# This class provides basic JSON file storage for persisting data.
 # A production implementation would use a more robust storage solution
 # such as a database or a distributed file system.
 

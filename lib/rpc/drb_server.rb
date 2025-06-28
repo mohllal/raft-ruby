@@ -5,9 +5,6 @@ require_relative '../config'
 #
 # This class provides a wrapper for the DRb server that is used to communicate with remote nodes.
 # It allows for starting and stopping the DRb server, and for exposing a node for remote access.
-#
-# @param node [RaftNode] The node to expose for remote access
-# @param port [Integer] The port to start the DRb server on
 
 module Raft
   class DRbServer

@@ -1,6 +1,9 @@
 # Log management mixin
 #
-# This module provides methods for managing the log of a Raft node.
+# This module provides methods for managing the log and metadata of a Raft node.
+#
+# The log is used to store the log entries for a Raft node.
+# The metadata is used to store the current term, voted for, commit index, and last applied log index.
 
 module Raft
   module LogManagement

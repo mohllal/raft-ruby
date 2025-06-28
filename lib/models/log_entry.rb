@@ -1,6 +1,5 @@
 module Raft
   module Models
-    # Log entry for Raft
     LogEntry = Struct.new(
       :term,
       :index,

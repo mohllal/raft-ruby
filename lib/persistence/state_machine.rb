@@ -3,7 +3,7 @@ require_relative '../config'
 
 # Simple key-value state machine for Raft demo
 #
-# This implements the application logic, a basic key-value store
+# This class implements the application logic, a basic key-value store
 # that processes committed log entries and persists its state.
 #
 # Note: This is simplified for demo purposes. A production Raft

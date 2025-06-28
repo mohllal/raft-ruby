@@ -1,6 +1,9 @@
 # Cluster setup mixin
 #
 # This module provides methods for setting up the cluster of Raft nodes.
+#
+# The cluster setup is done by configuring the remote nodes and starting the DRb server.
+# The cluster is ready when all the remote nodes are reachable.
 
 module Raft
   module ClusterSetup

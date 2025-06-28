@@ -1,17 +1,18 @@
 #!/usr/bin/env ruby
 
-# Distributed cluster demo
+# Distributed Raft Cluster Demo Client
 #
-# This script demonstrates running a 3-node Raft cluster with inter-node communication.
-# Each node runs in a separate process on different ports.
+# This script connects to a running Raft cluster. It does NOT start the cluster nodes - those
+# must be started separately.
 #
 # Usage:
-# 1. Start this script: ruby demo/distributed_cluster_demo.rb
-# 2. Open 3 terminal windows
-# 3. In terminal 1: ruby demo/start_node.rb node1
-# 4. In terminal 2: ruby demo/start_node.rb node2
-# 5. In terminal 3: ruby demo/start_node.rb node3
-# 6. Watch the leader election and cluster formation!
+# 1. First, start the cluster nodes in separate terminals:
+#    - Terminal 1: ruby demo/start_node.rb node1
+#    - Terminal 2: ruby demo/start_node.rb node2
+#    - Terminal 3: ruby demo/start_node.rb node3
+# 2. Once nodes are running, start this demo client:
+#    ruby demo/distributed_cluster_demo.rb
+# 3. Use interactive commands: status, add <key> <value>, quit
 
 require 'drb/drb'
 require 'timeout'

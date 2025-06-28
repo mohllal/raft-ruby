@@ -1,6 +1,5 @@
 module Raft
   module Models
-    # Metadata for Raft node persistent state
     Metadata = Struct.new(
       :current_term,
       :voted_for,

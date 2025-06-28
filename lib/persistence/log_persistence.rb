@@ -4,7 +4,7 @@ require_relative '../config'
 
 # Simple persistence for Raft log entries and metadata
 #
-# This class is used to persist the log entries and metadata for a Raft node.
+# This class persists the log entries and metadata for a Raft node.
 
 module Raft
   class LogPersistence

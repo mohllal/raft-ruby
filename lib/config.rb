@@ -2,6 +2,18 @@ require 'logger'
 require 'dotenv/load'
 
 # Raft configuration
+#
+# This module contains the configuration for the Raft implementation.
+#
+# The configuration is loaded from the environment variables.
+# The environment variables are loaded from the .env file.
+#
+# The .env file is not included in the repository.
+# You can create it by copying the .env.example file and filling in the values.
+#
+# The .env.example file contains the default values for the environment variables.
+# You can change the values to suit your needs.
+
 module Raft
   module Config
     # Timing settings (in seconds)

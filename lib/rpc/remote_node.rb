@@ -7,11 +7,6 @@ require_relative '../models'
 #
 # This class provides a wrapper for DRb client connections to remote nodes.
 # It allows for calling methods on remote nodes with a timeout and retry logic.
-#
-# @param node_id [String] The ID of the remote node
-# @param port [Integer] The port of the remote node
-# @param timeout [Float] The timeout for the remote call
-# @param retries [Integer] The number of retries for the remote call
 
 module Raft
   class RemoteNode

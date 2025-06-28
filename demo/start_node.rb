@@ -1,5 +1,23 @@
 #!/usr/bin/env ruby
 
+# Start a Raft node
+#
+# This script starts a Raft node with the given node ID.
+#
+# Usage:
+#   ruby start_node.rb <node_id>
+#
+# Example:
+#   ruby start_node.rb node1
+#   ruby start_node.rb node2
+#   ruby start_node.rb node3
+#
+# Note:
+#   This script assumes that the Raft nodes are running on different ports.
+#   You can change the port numbers in the DEFAULT_CLUSTER hash.
+#   The script will start the node and print the DRb URI for the node.
+#   You can use this URI to connect to the node from other scripts.
+
 require_relative '../lib/raft'
 
 # Default cluster configuration

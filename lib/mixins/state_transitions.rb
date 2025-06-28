@@ -1,6 +1,11 @@
 # State transitions mixin
 #
 # This module provides methods for transitioning between different states of a Raft node.
+#
+# The state transitions are:
+# - Follower -> Candidate
+# - Candidate -> Leader
+# - Leader -> Follower
 
 module Raft
   module StateTransitions

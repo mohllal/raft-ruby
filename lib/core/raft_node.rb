@@ -29,7 +29,7 @@ module Raft
       @log = [] # Array of LogEntry objects
 
       @highest_committed_index = 0 # The highest index that has been committed
-      @last_applied = 0
+      @applied_up_to_index = 0 # The highest index that has been applied to the state machine
 
       # Volatile state on leaders (reinitialized after election)
       @next_index = {} # Leader: next log index to send to each follower
@@ -66,7 +66,7 @@ module Raft
 
     private
 
-    attr_accessor :drb_server, :election_timer, :heartbeat_timer, :log, :last_applied
+    attr_accessor :drb_server, :election_timer, :heartbeat_timer, :log, :applied_up_to_index
     attr_reader :logger, :mutex, :state_machine, :remote_nodes, :port, :next_index, :match_index
     attr_writer :state, :current_term, :voted_for, :highest_committed_index
   end

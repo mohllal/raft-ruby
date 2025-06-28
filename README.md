@@ -254,7 +254,7 @@ Path: `logs/node2/metadata.json`, this is the metadata of the Raft node
   "current_term": 1,
   "voted_for": "node2",
   "highest_committed_index": 2,
-  "last_applied": 2,
+  "applied_up_to_index": 2,
   "last_updated": "2025-06-22T22:35:15.123Z"
 }
 ```

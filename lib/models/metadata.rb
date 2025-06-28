@@ -4,7 +4,7 @@ module Raft
       :current_term,
       :voted_for,
       :highest_committed_index,
-      :last_applied,
+      :applied_up_to_index,
       :updated_at,
       keyword_init: true
     ) do
@@ -18,7 +18,7 @@ module Raft
             current_term: 0,
             voted_for: nil,
             highest_committed_index: 0,
-            last_applied: 0,
+            applied_up_to_index: 0,
             updated_at: Time.now.to_s
           )
         end
@@ -27,7 +27,7 @@ module Raft
           current_term: hash['current_term'] || hash[:current_term] || 0,
           voted_for: hash['voted_for'] || hash[:voted_for] || nil,
           highest_committed_index: hash['highest_committed_index'] || hash[:highest_committed_index] || 0,
-          last_applied: hash['last_applied'] || hash[:last_applied] || 0,
+          applied_up_to_index: hash['applied_up_to_index'] || hash[:applied_up_to_index] || 0,
           updated_at: hash['updated_at'] || hash[:updated_at] || Time.now.to_s
         )
       end
@@ -39,7 +39,7 @@ module Raft
 
       def to_s
         "Metadata(term=#{current_term}, voted_for=#{voted_for}, " \
-          "commit=#{highest_committed_index}, applied=#{last_applied})"
+          "commit=#{highest_committed_index}, applied=#{applied_up_to_index})"
       end
     end
   end

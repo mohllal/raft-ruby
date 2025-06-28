@@ -23,10 +23,10 @@ module Raft
       self.current_term = metadata.current_term
       self.voted_for = metadata.voted_for
       self.highest_committed_index = metadata.highest_committed_index
-      self.last_applied = metadata.last_applied
+      self.applied_up_to_index = metadata.applied_up_to_index
 
       logger.info "Loaded persistent state: term=#{current_term}, log_size=#{log.length}, " \
-                  "commit=#{highest_committed_index}, applied=#{last_applied}"
+                  "commit=#{highest_committed_index}, applied=#{applied_up_to_index}"
     end
 
     # Persist current state to disk
@@ -41,7 +41,7 @@ module Raft
         current_term: current_term,
         voted_for: voted_for,
         highest_committed_index: highest_committed_index,
-        last_applied: last_applied
+        applied_up_to_index: applied_up_to_index
       )
       log_persistence.save_metadata(metadata)
     end
@@ -69,16 +69,16 @@ module Raft
 
     # Apply committed entries to state machine
     def apply_committed_entries
-      while last_applied < highest_committed_index
-        self.last_applied += 1
-        next unless self.last_applied <= log.length
+      while applied_up_to_index < highest_committed_index
+        self.applied_up_to_index += 1
+        next unless self.applied_up_to_index <= log.length
 
-        entry = log[last_applied - 1]
+        entry = log[applied_up_to_index - 1]
         result = state_machine.apply(entry.command)
-        logger.info "Applied entry #{last_applied}: #{entry.command} => #{result}"
+        logger.info "Applied entry #{applied_up_to_index}: #{entry.command} => #{result}"
       end
 
-      # Persist updated last_applied
+      # Persist updated applied_up_to_index
       persist_metadata
     end
 

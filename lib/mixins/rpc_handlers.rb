@@ -59,11 +59,11 @@ module Raft
 
         if success
           # If leaderCommit > commitIndex, set commitIndex = min(leaderCommit, index of last new entry)
-          if request.leader_commit > commit_index
-            old_commit = commit_index
-            self.commit_index = [request.leader_commit, last_log_index].min
+          if request.leader_commit > highest_committed_index
+            old_commit_index = highest_committed_index
+            self.highest_committed_index = [request.leader_commit, last_log_index].min
 
-            logger.info "Updated commit index from #{old_commit} to #{commit_index}"
+            logger.info "Updated commit index from #{old_commit_index} to #{highest_committed_index}"
             apply_committed_entries
           end
 

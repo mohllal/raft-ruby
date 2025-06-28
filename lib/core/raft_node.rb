@@ -17,7 +17,7 @@ module Raft
     include HeartbeatManagement
     include RpcHandlers
 
-    attr_reader :id, :state, :current_term, :voted_for, :commit_index
+    attr_reader :id, :state, :current_term, :voted_for, :highest_committed_index
 
     def initialize(id, port)
       @id = id
@@ -28,8 +28,7 @@ module Raft
       @voted_for = nil
       @log = [] # Array of LogEntry objects
 
-      # Volatile state on all servers
-      @commit_index = 0
+      @highest_committed_index = 0 # The highest index that has been committed
       @last_applied = 0
 
       # Volatile state on leaders (reinitialized after election)
@@ -69,6 +68,6 @@ module Raft
 
     attr_accessor :drb_server, :election_timer, :heartbeat_timer, :log, :last_applied
     attr_reader :logger, :mutex, :state_machine, :remote_nodes, :port, :next_index, :match_index
-    attr_writer :state, :current_term, :voted_for, :commit_index
+    attr_writer :state, :current_term, :voted_for, :highest_committed_index
   end
 end

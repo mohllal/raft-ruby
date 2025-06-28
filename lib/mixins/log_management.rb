@@ -22,11 +22,11 @@ module Raft
       metadata = log_persistence.load_metadata
       self.current_term = metadata.current_term
       self.voted_for = metadata.voted_for
-      self.commit_index = metadata.commit_index
+      self.highest_committed_index = metadata.highest_committed_index
       self.last_applied = metadata.last_applied
 
       logger.info "Loaded persistent state: term=#{current_term}, log_size=#{log.length}, " \
-                  "commit=#{commit_index}, applied=#{last_applied}"
+                  "commit=#{highest_committed_index}, applied=#{last_applied}"
     end
 
     # Persist current state to disk
@@ -40,7 +40,7 @@ module Raft
       metadata = Models::Metadata.new(
         current_term: current_term,
         voted_for: voted_for,
-        commit_index: commit_index,
+        highest_committed_index: highest_committed_index,
         last_applied: last_applied
       )
       log_persistence.save_metadata(metadata)
@@ -69,7 +69,7 @@ module Raft
 
     # Apply committed entries to state machine
     def apply_committed_entries
-      while last_applied < commit_index
+      while last_applied < highest_committed_index
         self.last_applied += 1
         next unless self.last_applied <= log.length
 
@@ -100,7 +100,7 @@ module Raft
       prev_log_term = 0
       prev_log_term = log[prev_log_index - 1].term if prev_log_index.positive? && prev_log_index <= log.length
 
-      # Send entries from next_idx onwards (one at a time for simplicity)
+      # Send entries from next_idx onwards
       entries_to_send = []
       entries_to_send = [log[next_idx - 1]] if next_idx <= log.length
 
@@ -110,7 +110,7 @@ module Raft
         prev_log_index: prev_log_index,
         prev_log_term: prev_log_term,
         log_entries: entries_to_send,
-        leader_commit: commit_index
+        leader_commit: highest_committed_index
       )
 
       logger.debug "Sending #{request.type} to #{follower_id} (next_idx: #{next_idx})"
@@ -147,7 +147,7 @@ module Raft
           end
 
           # Check if we can advance commit index
-          advance_commit_index
+          advance_highest_committed_index
 
           # Continue replicating if there are more entries
           if next_index[follower_id] <= log.length
@@ -165,7 +165,7 @@ module Raft
     end
 
     # Advance commit index based on match indices
-    def advance_commit_index
+    def advance_highest_committed_index
       return unless state == NodeState::LEADER
 
       # Find the highest index that a majority of nodes have
@@ -173,16 +173,16 @@ module Raft
       sorted_indices = match_indices.sort.reverse
 
       majority_size = (match_indices.length / 2) + 1
-      new_commit_index = sorted_indices[majority_size - 1]
+      new_highest_committed_index = sorted_indices[majority_size - 1]
 
       # Only advance if the entry is from current term
-      if new_commit_index > commit_index &&
-         new_commit_index <= log.length &&
-         log[new_commit_index - 1].term == current_term
+      if new_highest_committed_index > highest_committed_index &&
+         new_highest_committed_index <= log.length &&
+         log[new_highest_committed_index - 1].term == current_term
 
-        old_commit = commit_index
-        self.commit_index = new_commit_index
-        logger.info "Advanced commit index from #{old_commit} to #{commit_index}"
+        old_highest_committed_index = highest_committed_index
+        self.highest_committed_index = new_highest_committed_index
+        logger.info "Advanced commit index from #{old_highest_committed_index} to #{highest_committed_index}"
 
         # Apply newly committed entries
         apply_committed_entries

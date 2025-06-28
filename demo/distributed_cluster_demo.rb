@@ -170,8 +170,8 @@ if leader_id
     puts "\n   Checking replication status:"
     nodes.each do |node_id, node|
       log_length = node.last_log_index
-      commit_index = node.commit_index
-      puts "   #{node_id}: log length = #{log_length}, commit index = #{commit_index}"
+      highest_committed_index = node.highest_committed_index
+      puts "   #{node_id}: log length = #{log_length}, commit index = #{highest_committed_index}"
     rescue StandardError => e
       puts "   #{node_id}: ERROR - #{e.message}"
     end

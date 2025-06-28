@@ -26,7 +26,7 @@ module Raft
             prev_log_index: prev_log_index,
             prev_log_term: prev_log_term,
             log_entries: entries_to_send,
-            leader_commit: commit_index
+            leader_commit: highest_committed_index
           )
 
           logger.debug "Sending heartbeat to #{node_id} (next_idx: #{next_idx}, entries: #{entries_to_send.length})"
